@@ -22,6 +22,7 @@ public static class NHibernateHelper
             db.ConnectionString = connectionString;
             db.LogSqlInConsole = true;
             db.LogFormattedSql = true;
+            db.SchemaAction = SchemaAutoAction.Create;
         });
         
         var mapper = new ModelMapper();
@@ -31,9 +32,6 @@ public static class NHibernateHelper
         configuration.AddMapping(domainMapping);
         
         _sessionFactory = configuration.BuildSessionFactory();
-
-        // Создание таблиц если их нет и заполнение данными
-        Seed.Seeding(_sessionFactory, configuration);
         
         services.AddSingleton(_sessionFactory);
         services.AddScoped(factory => _sessionFactory.OpenSession());

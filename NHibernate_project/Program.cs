@@ -3,10 +3,7 @@ using NHibernate_project.Data;
 using NHibernate_project.Models;
 using NHibernate.Cfg;
 using NHibernate.Cfg.MappingSchema;
-using NHibernate.Dialect;
 using NHibernate.Linq;
-using NHibernate.Mapping.ByCode;
-using ISession = NHibernate.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -20,6 +17,9 @@ services.AddSwaggerGen();
 services.AddNHibernate(configuration.GetConnectionString("MariaDb")!);
 
 var app = builder.Build();
+
+// Заполнение таблиц данными
+app.Seeding();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

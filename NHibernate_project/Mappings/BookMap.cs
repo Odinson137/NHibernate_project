@@ -1,5 +1,6 @@
 ﻿using NHibernate;
 using NHibernate_project.Models;
+using NHibernate.Mapping;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 
@@ -22,6 +23,13 @@ public class BookMap : ClassMapping<Book>
             x.Type(NHibernateUtil.StringClob);
             x.NotNullable(true);
         });
+
+        // Property(b => b.Chapters);
+
+        // Bag<Book>(x => x.Chapters, c =>
+        // {   
+        //     c.Key(k => k.Column("BookId"));
+        // });
         
         Table("Books");
     }

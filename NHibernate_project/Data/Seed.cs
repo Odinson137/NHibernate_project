@@ -2,6 +2,7 @@
 using NHibernate_project.Models;
 using NHibernate.Cfg;
 using NHibernate.Tool.hbm2ddl;
+using ISession = NHibernate.ISession;
 
 namespace NHibernate_project.Data;
 
@@ -11,17 +12,20 @@ public static class Seed
     // ReSharper disable once FieldCanBeMadeReadOnly.Global
     public static bool IsEnabled = true;
     
-    public static void Seeding(ISessionFactory sessionFactory, Configuration configuration)
+    public static void Seeding(this WebApplication webApplication)
     {
         if (!IsEnabled) return;
-        
-        using var session = sessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        if (!TableExists(sessionFactory, "Books"))
-        {
-            new SchemaUpdate(configuration).Execute(false, true);
-        }
 
+        using var serviceScope = webApplication.Services.CreateAsyncScope();
+        using var session = serviceScope.ServiceProvider.GetRequiredService<ISession>();
+        using var transaction = session.BeginTransaction();
+
+        if (session.Query<Book>().Any())
+        {
+            Console.WriteLine("Данные уже есть");
+            return;
+        }
+        
         session.SaveAsync(new Book
         {
             Id = Guid.NewGuid(),
