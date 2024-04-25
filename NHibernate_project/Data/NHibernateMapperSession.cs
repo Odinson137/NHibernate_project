@@ -15,6 +15,8 @@ public class NHibernateMapperSession : IMapperSession
     }
  
     public IQueryable<Book> Books => _session.Query<Book>();
+    public IQueryable<Genre> Genres => _session.Query<Genre>();
+    public IQueryable<Chapter> Chapters => _session.Query<Chapter>();
  
     public void BeginTransaction()
     {
@@ -40,17 +42,17 @@ public class NHibernateMapperSession : IMapperSession
         }
     }
  
-    public async Task Save(Book entity)
+    public async Task Save<T>(T entity)
     {
         await _session.SaveAsync(entity);
     }
  
-    public async Task Update(Book entity)
+    public async Task Update<T>(T entity)
     {
         await _session.UpdateAsync(entity);
     }
     
-    public async Task Delete(Book entity)
+    public async Task Delete<T>(T entity)
     {
         await _session.DeleteAsync(entity);
     }

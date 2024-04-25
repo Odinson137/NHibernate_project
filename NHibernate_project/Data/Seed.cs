@@ -1,7 +1,6 @@
-﻿using NHibernate;
+﻿using System.Data;
 using NHibernate_project.Models;
-using NHibernate.Cfg;
-using NHibernate.Tool.hbm2ddl;
+using NHibernate.Linq;
 using ISession = NHibernate.ISession;
 
 namespace NHibernate_project.Data;
@@ -12,35 +11,108 @@ public static class Seed
     // ReSharper disable once FieldCanBeMadeReadOnly.Global
     public static bool IsEnabled = true;
     
-    public static void Seeding(this WebApplication webApplication)
+    public static async Task Seeding(this WebApplication webApplication)
     {
+        var logger = webApplication.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation($"Разрешено ли сидирование: {IsEnabled}");
+        
         if (!IsEnabled) return;
 
-        using var serviceScope = webApplication.Services.CreateAsyncScope();
+        await using var serviceScope = webApplication.Services.CreateAsyncScope();
         using var session = serviceScope.ServiceProvider.GetRequiredService<ISession>();
         using var transaction = session.BeginTransaction();
 
-        if (session.Query<Book>().Any())
+
+        if (await session.Query<Book>().CountAsync() != 0)
         {
-            Console.WriteLine("Данные уже есть");
+            logger.LogInformation("Данные уже есть");
             return;
         }
-        
-        session.SaveAsync(new Book
-        {
-            Id = Guid.NewGuid(),
-            Title = "Привет из сида",
-        });
 
-        transaction.Commit();
+        logger.LogInformation("Запись данных");
+
+        var book = new Book
+        {
+            Title = "Hello from seed",
+            Chapters = new List<Chapter>(),
+            Genres = new HashSet<Genre>(),
+        };
+        
+        var chapter1 = new Chapter {
+            Title = "Chapter 1",
+            Book = book,
+        };
+        
+        var chapter2 = new Chapter {
+            Title = "Chapter 2",
+            Book = book,
+        };
+        
+        var chapter3 = new Chapter {
+            Title = "Chapter 3",
+            Book = book,
+        };
+
+        await session.SaveCollectionAsync(chapter1, chapter2, chapter3);
+
+        var genre1 = new Genre()
+        {
+            Title = "Drama",
+        };
+        
+        var genre2 = new Genre()
+        {
+            Title = "Action",
+        };
+        
+        var genre3 = new Genre()
+        {
+            Title = "Comedy",
+        };
+
+        await session.SaveCollectionAsync(genre1, genre2, genre3);
+        
+        book.Genres.Add(genre1);
+        book.Genres.Add(genre2);
+        book.Genres.Add(genre3);
+
+        await session.SaveAsync(book);
+        
+        await transaction.CommitAsync();
+        
+        logger.LogInformation("Данные добавлены");
     }
-    static bool TableExists(ISessionFactory sessionFactory, string tableName)
+    
+    private static async Task SaveCollectionAsync<T>(this ISession session, params T[] args)
     {
-        using var session = sessionFactory.OpenSession();
-        var connection = session.Connection;
-        var cmd = connection.CreateCommand();
-        cmd.CommandText = $"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}'";
-        var result = Convert.ToInt32(cmd.ExecuteScalar());
-        return result > 0;
+        foreach (var arg in args)
+        {
+            await session.SaveAsync(arg);
+        }
+    }
+    
+    public async static Task<WebApplication> AlterSchemaCollation(this WebApplication webApplication)
+    {
+        var logger = webApplication.Services.GetRequiredService<ILogger<Program>>();
+
+        logger.LogInformation("Change schema");
+        await using var serviceScope = webApplication.Services.CreateAsyncScope();
+        using var session = serviceScope.ServiceProvider.GetRequiredService<ISession>();
+        
+        if (await session.Query<Book>().CountAsync() != 0)
+        {
+            logger.LogInformation("Данные уже есть");
+            return webApplication;
+        }
+        
+        await using var connection = session.Connection;
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = "alter schema NHibernateDb collate utf8_general_ci;";
+        await command.ExecuteNonQueryAsync();
+
+        return webApplication;
     }
 }

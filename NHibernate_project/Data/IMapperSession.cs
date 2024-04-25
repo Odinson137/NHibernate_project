@@ -8,9 +8,11 @@ public interface IMapperSession
     Task Commit();
     Task Rollback();
     void CloseTransaction();
-    Task Save(Book entity);
-    Task Update(Book entity);
-    Task Delete(Book entity);
+    Task Save<T>(T entity);
+    Task Update<T>(T entity);
+    Task Delete<T>(T entity);
     Task RunInTransaction(Func<Task> func);
     IQueryable<Book> Books { get; }
+    IQueryable<Genre> Genres { get; }
+    IQueryable<Chapter> Chapters { get; }
 }

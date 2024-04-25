@@ -1,8 +1,8 @@
 ﻿namespace NHibernate_project.Models;
 
-public class Book
+public class Book : BaseEntity
 {
-    public virtual Guid Id { get; set; }
     public virtual string Title { get; set; } = null!;
-    // public virtual ICollection<Chapter>? Chapters { get; set; }
+    public virtual ICollection<Chapter>? Chapters { get; set; }
+    public virtual ICollection<Genre>? Genres { get; set; }
 }

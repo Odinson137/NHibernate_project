@@ -1,9 +1,7 @@
-using Microsoft.AspNetCore.Http.HttpResults;
 using NHibernate_project.Data;
 using NHibernate_project.Models;
-using NHibernate.Cfg;
-using NHibernate.Cfg.MappingSchema;
 using NHibernate.Linq;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -16,10 +14,17 @@ services.AddSwaggerGen();
 
 services.AddNHibernate(configuration.GetConnectionString("MariaDb")!);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.Debug()
+    .CreateLogger());
+
 var app = builder.Build();
 
+// await app.AlterSchemaCollation();
 // Заполнение таблиц данными
-app.Seeding();
+await app.Seeding();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -32,17 +37,39 @@ app.UseHttpsRedirection();
 
 app.MapGet("/GetBooks", async (IMapperSession session) =>
     {
-        var products = await session.Books.ToListAsync();
+        var products = await session.Books
+            .Select(c => new
+            {
+                c.Id, 
+                c.Title, 
+                ChapterTitle = c.Chapters!.Select(x => new
+                {
+                    x.Id,
+                    x.Title,
+                }), 
+            })
+            .ToListAsync();
         return products;
     })
     .WithName("GetBooks")
     .WithOpenApi();
 
-app.MapPost("/AddBook", async (IMapperSession session, string bookTitle) =>
+app.MapGet("/GetGenres", async (
+        IMapperSession session) =>
+    {
+        var genres = await session.Genres.Select(c => new {c.Id, c.Title}).ToListAsync();
+
+        return genres;
+    })
+    .WithName("GetGenres")
+    .WithOpenApi();
+
+app.MapPost("/AddBook", async (
+        IMapperSession session, 
+        string bookTitle) =>
     {
         var newBook = new Book
         {
-            Id = Guid.NewGuid(),
             Title = bookTitle,
         };
 
@@ -56,12 +83,13 @@ app.MapPost("/AddBook", async (IMapperSession session, string bookTitle) =>
     .WithName("AddBook")
     .WithOpenApi();
 
+
 app.MapPut("/UpdateBook", async (
         IMapperSession session, 
-        string bookId,
+        long bookId,
         string newBookTitle) =>
     {
-        var book = await session.Books.Where(c => c.Id == Guid.Parse(bookId)).FirstOrDefaultAsync();
+        var book = await session.Books.Where(c => c.Id == bookId).FirstOrDefaultAsync();
         if (book == null)
         {
             return Results.Ok("The book is not found");
@@ -79,9 +107,9 @@ app.MapPut("/UpdateBook", async (
 
 app.MapDelete("/DeleteBook", async (
         IMapperSession session, 
-        string bookId) =>
+        long bookId) =>
     {
-        var book = await session.Books.Where(c => c.Id == Guid.Parse(bookId)).FirstOrDefaultAsync();
+        var book = await session.Books.Where(c => c.Id == bookId).FirstOrDefaultAsync();
         if (book == null)
         {
             return Results.Ok("The book is not found");

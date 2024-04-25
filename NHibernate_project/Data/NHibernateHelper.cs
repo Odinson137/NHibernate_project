@@ -1,14 +1,17 @@
-﻿using NHibernate;
+﻿using System.Reflection;
+using FluentNHibernate;
 using NHibernate.Cfg;
 using NHibernate.Connection;
 using NHibernate.Dialect;
 using NHibernate.Driver;
 using NHibernate.Mapping.ByCode;
+using NHibernate.Tool.hbm2ddl;
+using ISession = NHibernate.ISession;
+
 namespace NHibernate_project.Data;
 
 public static class NHibernateHelper
 {
-    private static ISessionFactory _sessionFactory;
 
     public static IServiceCollection AddNHibernate(this IServiceCollection services, string connectionString)
     {
@@ -25,21 +28,22 @@ public static class NHibernateHelper
             db.SchemaAction = SchemaAutoAction.Create;
         });
         
-        var mapper = new ModelMapper();
+        // new SchemaExport(configuration).Execute(true, true, false);
         
-        mapper.AddMappings(typeof(NHibernateHelper).Assembly.ExportedTypes);
-        var domainMapping = mapper.CompileMappingForAllExplicitlyAddedEntities();
-        configuration.AddMapping(domainMapping);
+        var mappings = Assembly.GetExecutingAssembly();
         
-        _sessionFactory = configuration.BuildSessionFactory();
+        configuration.AddMappingsFromAssembly(mappings);
         
-        services.AddSingleton(_sessionFactory);
-        services.AddScoped(factory => _sessionFactory.OpenSession());
+        var sessionFactory = configuration.BuildSessionFactory();
+
+        services.AddSingleton(sessionFactory);
+        services.AddScoped<ISession>(_ => sessionFactory.OpenSession());
         
         services.AddScoped<IMapperSession, NHibernateMapperSession>();
         
         return services;
     }
+
 
 
 }
