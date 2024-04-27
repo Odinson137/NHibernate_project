@@ -1,3 +1,7 @@
 ﻿NHibernate_project/bin
 NHibernate_project/obj
+
+NHibernate.Migration/bin
+NHibernate.Migration/obj
+
 .idea

@@ -7,7 +7,7 @@ namespace NHibernate_project.Data;
 public class NHibernateMapperSession : IMapperSession
 {
     private readonly ISession _session;
-    private ITransaction _transaction = null!;
+    private ITransaction _transaction;
  
     public NHibernateMapperSession(ISession session)
     {

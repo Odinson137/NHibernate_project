@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using NHibernate_project.Data;
 using NHibernate_project.Models;
 using NHibernate.Linq;
@@ -54,20 +55,76 @@ app.MapGet("/GetBooks", async (IMapperSession session) =>
     .WithName("GetBooks")
     .WithOpenApi();
 
-app.MapGet("/GetGenres", async (
-        IMapperSession session) =>
+app.MapGet("/GetBook", async (
+        IMapperSession session, 
+        ILogger<Program> logger,
+        [FromQuery] long bookId) =>
     {
+        logger.LogInformation($"Get book by id - {bookId}");
+        var products = await session.Books
+            .Select(c => new
+            {
+                c.Id, 
+                c.Title, 
+                Chapters = c.Chapters!.Select(x => new
+                {
+                    x.Id,
+                    x.Title,
+                }), 
+                Genres = c.Genres!.Select(x => new {x.Id, x.Title}),
+            })
+            .FirstOrDefaultAsync();
+        
+        logger.LogInformation($"Got book by id - {bookId}");
+
+        return products;
+    })
+    .WithName("GetBook")
+    .WithOpenApi();
+
+app.MapGet("/GetGenres", async (
+        IMapperSession session,
+        ILogger<Program> logger) =>
+    {
+        logger.LogInformation("Get genres");
+
         var genres = await session.Genres.Select(c => new {c.Id, c.Title}).ToListAsync();
+        logger.LogInformation("Got genres");
 
         return genres;
     })
     .WithName("GetGenres")
     .WithOpenApi();
 
+app.MapGet("/GetGenre", async (
+        IMapperSession session, 
+        ILogger<Program> logger,
+        [FromQuery] long genreId) =>
+    {
+        logger.LogInformation($"Get genre by id - {genreId}");
+        var products = await session.Genres
+            .Select(c => new
+            {
+                c.Id, 
+                c.Title, 
+                BookCount = c.Books!.Count,
+            })
+            .FirstOrDefaultAsync();
+        
+        logger.LogInformation("Got genre");
+
+        return products;
+    })
+    .WithName("GetGenre")
+    .WithOpenApi();
+
 app.MapPost("/AddBook", async (
         IMapperSession session, 
-        string bookTitle) =>
+        ILogger<Program> logger,
+        [FromQuery] string bookTitle) =>
     {
+        logger.LogInformation($"Add book with bookTitle - {bookTitle}");
+
         var newBook = new Book
         {
             Title = bookTitle,
@@ -78,6 +135,8 @@ app.MapPost("/AddBook", async (
             await session.Save(newBook);
         });
 
+        logger.LogInformation("Added book");
+        
         return newBook;
     })
     .WithName("AddBook")
@@ -86,9 +145,12 @@ app.MapPost("/AddBook", async (
 
 app.MapPut("/UpdateBook", async (
         IMapperSession session, 
-        long bookId,
-        string newBookTitle) =>
+        ILogger<Program> logger,
+        [FromQuery] long bookId,
+        [FromQuery] string newBookTitle) =>
     {
+        logger.LogInformation($"Update book bookId - {bookId} & newBookTitle - {newBookTitle}");
+
         var book = await session.Books.Where(c => c.Id == bookId).FirstOrDefaultAsync();
         if (book == null)
         {
@@ -96,9 +158,16 @@ app.MapPut("/UpdateBook", async (
         }
 
         book.Title = newBookTitle;
+
+        session.BeginTransaction();
         
         await session.Update(book);
+        await session.Commit();
         
+        session.CloseTransaction();
+
+        logger.LogInformation($"Updated book bookId");
+
         return Results.Ok("The book is successfully changed title");
 
     })
@@ -107,18 +176,29 @@ app.MapPut("/UpdateBook", async (
 
 app.MapDelete("/DeleteBook", async (
         IMapperSession session, 
-        long bookId) =>
+        ILogger<Program> logger,
+        [FromQuery] long bookId) =>
     {
+        logger.LogInformation($"Delete book bookId - {bookId}");
+
         var book = await session.Books.Where(c => c.Id == bookId).FirstOrDefaultAsync();
         if (book == null)
         {
             return Results.Ok("The book is not found");
         }
 
-        await session.Delete(book);
-        
-        return Results.Ok("The book is successfully deleted");
+        session.BeginTransaction();
 
+        await session.Delete(book);
+
+        await session.Commit();
+        
+        session.CloseTransaction();
+        
+        
+        logger.LogInformation($"Deleted book");
+
+        return Results.Ok("The book is successfully deleted");
     })
     .WithName("DeleteBook")
     .WithOpenApi();

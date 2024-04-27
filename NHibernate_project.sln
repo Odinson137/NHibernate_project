@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NHibernate.Migration", "NHibernate.Migration\NHibernate.Migration.csproj", "{28BB3B6A-D2AF-4F6C-85CB-6DC1D117FC38}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,5 +19,9 @@ Global
 		{07A71A7F-CC26-4740-8A1D-9EB3C30B3EC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07A71A7F-CC26-4740-8A1D-9EB3C30B3EC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07A71A7F-CC26-4740-8A1D-9EB3C30B3EC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28BB3B6A-D2AF-4F6C-85CB-6DC1D117FC38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28BB3B6A-D2AF-4F6C-85CB-6DC1D117FC38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28BB3B6A-D2AF-4F6C-85CB-6DC1D117FC38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28BB3B6A-D2AF-4F6C-85CB-6DC1D117FC38}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
