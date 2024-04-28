@@ -20,8 +20,6 @@ public static class Seed
 
         await using var serviceScope = webApplication.Services.CreateAsyncScope();
         using var session = serviceScope.ServiceProvider.GetRequiredService<ISession>();
-        using var transaction = session.BeginTransaction();
-
 
         if (await session.Query<Book>().CountAsync() != 0)
         {
@@ -31,6 +29,38 @@ public static class Seed
 
         logger.LogInformation("Запись данных");
 
+        using var transaction = session.BeginTransaction();
+        
+        var user1 = new User
+        {
+            UserName = "Admin",
+            Name = "Yuriy",
+            LastName = "Buryy",
+            Password = "12345678",
+            Address = new Address
+            {
+                Street = "Острожских",
+                City = "Минск",
+                Number = 8,
+            }
+        };
+        
+        var user2 = new User
+        {
+            UserName = "Kactus25",
+            Name = "Baget",
+            LastName = "Baget",
+            Password = "12345678",
+            Address = new Address
+            {
+                Street = "Багетная",
+                City = "Минск",
+                Number = 25,
+            }
+        };
+
+        await session.SaveCollectionAsync(user1, user2);
+        
         var book = new Book
         {
             Title = "Hello from seed",

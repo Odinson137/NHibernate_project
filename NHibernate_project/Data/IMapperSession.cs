@@ -12,6 +12,7 @@ public interface IMapperSession
     Task Update<T>(T entity);
     Task Delete<T>(T entity);
     Task RunInTransaction(Func<Task> func);
+    IQueryable<User> Users { get; }
     IQueryable<Book> Books { get; }
     IQueryable<Genre> Genres { get; }
     IQueryable<Chapter> Chapters { get; }

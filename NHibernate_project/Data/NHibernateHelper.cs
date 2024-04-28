@@ -41,7 +41,7 @@ public static class NHibernateHelper
             db.ConnectionString = connectionString;
             db.LogSqlInConsole = true;
             db.LogFormattedSql = true;
-            db.SchemaAction = SchemaAutoAction.Create;
+            // db.SchemaAction = SchemaAutoAction.Create;
         });
 
         return configuration;

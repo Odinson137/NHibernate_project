@@ -14,6 +14,7 @@ public class NHibernateMapperSession : IMapperSession
         _session = session;
     }
  
+    public IQueryable<User> Users => _session.Query<User>();
     public IQueryable<Book> Books => _session.Query<Book>();
     public IQueryable<Genre> Genres => _session.Query<Genre>();
     public IQueryable<Chapter> Chapters => _session.Query<Chapter>();
