@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NHibernate_project.Data;
+using NHibernate_project.DTO;
 using NHibernate_project.Models;
 using NHibernate.Linq;
 
@@ -12,11 +15,14 @@ public static class GenreMinimalController
     {
         app.MapGet("/GetGenres", async (
                 IMapperSession session,
+                IMapper mapper,
                 ILogger<Program> logger) =>
             {
                 logger.LogInformation("Get genres");
 
-                var genres = await session.Genres.Select(c => new {c.Id, c.Title}).ToListAsync();
+                var genres = await session.Genres
+                    .ProjectTo<GenreDto>(mapper.ConfigurationProvider)
+                    .ToListAsync();
                 logger.LogInformation("Got genres");
 
                 return genres;
@@ -27,16 +33,12 @@ public static class GenreMinimalController
         app.MapGet("/GetGenre", async (
                 IMapperSession session, 
                 ILogger<Program> logger,
+                IMapper mapper,
                 [FromQuery] long genreId) =>
             {
                 logger.LogInformation($"Get genre by id - {genreId}");
                 var products = await session.Genres
-                    .Select(c => new
-                    {
-                        c.Id, 
-                        c.Title, 
-                        BookCount = c.Books!.Count,
-                    })
+                    .ProjectTo<GenreDto>(mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync();
         
                 logger.LogInformation("Got genre");

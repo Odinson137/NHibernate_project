@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NHibernate_project.Data;
+using NHibernate_project.DTO;
 using NHibernate_project.Models;
 using NHibernate.Linq;
 
@@ -10,20 +13,12 @@ public static class BookMinimalController
 {
     public static void InitBookController(this WebApplication app)
     {
-        app.MapGet("/GetBooks", async (IMapperSession session) =>
+        app.MapGet("/GetBooks", async (
+                IMapperSession session,
+                IMapper mapper) =>
             {
                 var books = await session.Books
-                    .Select(c => new
-                    {
-                        c.Id, 
-                        c.Title, 
-                        ChapterTitle = c.Chapters!.Select(x => new
-                        {
-                            x.Id,
-                            x.Title,
-                        }), 
-                    })
-                    .ToListAsync();
+                    .ProjectTo<BookDto>(mapper.ConfigurationProvider).ToListAsync();
                 return books;
             })
             .WithName("GetBooks")
@@ -32,21 +27,12 @@ public static class BookMinimalController
         app.MapGet("/GetBook", async (
                 IMapperSession session, 
                 ILogger<Program> logger,
+                IMapper mapper,
                 [FromQuery] long bookId) =>
             {
                 logger.LogInformation($"Get book by id - {bookId}");
                 var book = await session.Books
-                    .Select(c => new
-                    {
-                        c.Id, 
-                        c.Title, 
-                        Chapters = c.Chapters!.Select(x => new
-                        {
-                            x.Id,
-                            x.Title,
-                        }), 
-                        Genres = c.Genres!.Select(x => new {x.Id, x.Title}),
-                    })
+                    .ProjectTo<BookDto>(mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync();
                 
                 logger.LogInformation($"Got book by id - {bookId}");

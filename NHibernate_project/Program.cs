@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 using NHibernate_project.ApplicationMaps;
 using NHibernate_project.Data;
-using NHibernate_project.Models;
-using NHibernate.Linq;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +19,8 @@ builder.Logging.AddSerilog(new LoggerConfiguration()
     .WriteTo.Console()
     .WriteTo.Debug()
     .CreateLogger());
+
+services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
 
